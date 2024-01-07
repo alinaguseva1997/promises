@@ -1,0 +1,93 @@
+<meta charset="UTF-8">
+<script src="api.js"></script>
+<script src="axios.js"></script>
+<script>
+    // внутрь Promise передаем колбэк-функцию, которая собственно и есть та логика, которую промис обещает выполнить.
+    const doAfter = (seconds) => {
+        let myPromise = new Promise((resolve, reject) => {
+            setTimeout(()=>{
+                resolve()
+            }, seconds * 300)
+        });
+        return myPromise
+    } //doAfter - промисификация - создание промиса там, где его не было, с целью асинхронного выполнения кода
+    // ниже по коду мы можем подписаться, на промис, чтобы он (промис) вызвал нашу функцию, когда он (промис) зарезолвится. Для этого передаём в метод then колбэк-функцию)
+    // doAfter(5).then( () => console.log('я сработал через 5 секунд') );
+    // doAfter(3).then( () => console.log('а я сработал через 3 секунд') );
+    // doAfter(10).then( () => console.log('я сработал через 10 секунд') );
+
+
+    //пример хорошего кода вместо вложенности then, когда в цепочке появился новый промис
+
+    doAfter(1)
+        .then(rand1 => {
+            // console.log('rand1')
+            return rand1
+        })
+        .then(rand1 => {
+            return doAfter(5) //возвр новый промис
+        })
+        .then(rand2 => { //пришли данные, которыми зарезолвился новый промис
+            // console.log('rand2')
+            return rand2
+        })
+        .then(rand2 => {
+            // console.log('rand2')
+        })
+
+
+    //пример использования замыкания в промисах
+    let msVacansies;
+    api.getVacanciesCountFromMicrosoft()
+        .then(msCount => {
+            msVacansies = msCount
+            // console.log(msCount)
+            return api.getVacanciesCountFromGoogle()
+        })
+        .then(gCount => {
+            // console.log(gCount)
+            return api.sendStudentsCountToItKamasutra(gCount + msVacansies)
+    })
+        .then(res => {
+            // console.log('from it-kamasutra: ', res.data)
+        })
+
+
+    //пример использования async await (позволяет нам избавиться от написания then,
+    // в этом случае then работать будет уже под капотом).
+
+    const loadVacanciesPromiseAsyncAwait = async () => {
+        let msCount = await api.getVacanciesCountFromMicrosoft() // в переменной сидит то, чем промис зарезолвился
+        // console.log(msCount)
+        let gCount = await api.getVacanciesCountFromGoogle()
+        // console.log(gCount)
+        let res = await api.sendStudentsCountToItKamasutra(gCount + msVacansies)
+        // console.log('from it-kamasutra: ', res.data)
+    }
+    loadVacanciesPromiseAsyncAwait()
+
+
+    //пример использования async await c Promise.all()
+
+    const loadVacanciesPromiseAsyncAwaitPromiseALL = async () => {
+        let msPr = api.getVacanciesCountFromMicrosoft() // в переменной сидит промис
+        let gPr = api.getVacanciesCountFromGoogle() // в переменной сидит промис
+        let resultsMSG = await Promise.all([msPr, gPr]) // в переменной сидит массив с результатами промисов
+        let res = await api.sendStudentsCountToItKamasutra(resultsMSG[0] + resultsMSG[1])
+        // console.log('from it-kamasutra: ', res.data)
+    }
+    loadVacanciesPromiseAsyncAwaitPromiseALL()
+
+    //пример использования async await c Promise.all() - сокращенный синтаксис
+
+    const loadVacanciesPromiseAsyncAwaitPromiseALLCopy = async () => {
+        let resultsMSG = await Promise.all([// в переменной сидит массив с результатами промисов
+            api.getVacanciesCountFromMicrosoft(), // промис
+            api.getVacanciesCountFromGoogle() //  промис
+        ])
+        let res = await api.sendStudentsCountToItKamasutra(resultsMSG[0] + resultsMSG[1])
+        console.log('from it-kamasutra: ', res.data)
+    }
+    loadVacanciesPromiseAsyncAwaitPromiseALLCopy()
+
+</script>
